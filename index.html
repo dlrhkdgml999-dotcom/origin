@@ -10,9 +10,11 @@ body{font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;c
 .id{display:inline-block;margin-top:14px;font-size:13px;background:#EEF6FD;border-radius:8px;padding:3px 10px}
 p{color:#66738F;line-height:1.6;font-size:15px}
 .player{display:none;flex-direction:column;align-items:center;min-height:100vh;background:#111}
-.player video{width:100%;max-width:540px;max-height:100vh;background:#000;display:block}
-body.land .player{justify-content:center}body.land .player video{max-width:100vw;max-height:calc(100vh - 40px);width:auto;height:calc(100vh - 40px)}body.land .bar{max-width:100vw}
-.bar{width:100%;max-width:540px;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;box-sizing:border-box;color:#D9C3A0;font-size:13px;letter-spacing:.08em}
+.player video{width:100vw;height:calc(100vh - 46px);height:calc(100dvh - 46px);object-fit:contain;background:#000;display:block}
+body.land .player video{height:100vh;height:100dvh}
+body.land .bar{position:fixed;top:0;right:0;width:auto;max-width:none;gap:14px;background:rgba(17,17,17,.72);border-bottom-left-radius:14px;transition:opacity .4s}
+body.land .bar.hide{opacity:0;pointer-events:none}body.land .bar>span:first-child{display:none}
+.bar{width:100%;max-width:none;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;box-sizing:border-box;color:#D9C3A0;font-size:13px;letter-spacing:.08em}
 .bar b{color:#F2EEE4;letter-spacing:0;font-size:14px}
 .ctl{display:flex;gap:8px}.ctl button{background:#2A2D35;color:#F2EEE4;border:1px solid #444;border-radius:16px;padding:6px 12px;font-size:14px;letter-spacing:0}
 </style></head><body>
@@ -40,6 +42,8 @@ fetch('videos.json',{cache:'no-store'}).then(r=>r.json()).then(m=>{
     const S=[1,1.25,1.5]; let si=0;
     document.getElementById('spd').onclick=()=>{si=(si+1)%S.length; vd.playbackRate=S[si]; document.getElementById('spd').textContent=S[si]+'배속';};
     vd.addEventListener('loadedmetadata',()=>{vd.playbackRate=S[si];});
+    const bar=document.querySelector('.bar'); let ht=null; function showBar(){bar.classList.remove('hide');clearTimeout(ht);ht=setTimeout(()=>{if(document.body.classList.contains('land')&&!vd.paused)bar.classList.add('hide');},3000);}
+    ['click','touchstart'].forEach(ev=>document.addEventListener(ev,showBar,{passive:true})); vd.addEventListener('play',showBar); vd.addEventListener('pause',()=>bar.classList.remove('hide'));
     document.getElementById('back').onclick=()=>{vd.currentTime=Math.max(0,vd.currentTime-10);};
     window.addEventListener('resize',()=>pick(false)); window.addEventListener('orientationchange',()=>setTimeout(()=>pick(false),300));
   } else { location.replace(u); }   // 유튜브 등 바깥 주소
