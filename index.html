@@ -67,7 +67,7 @@ fetch('videos.json',{cache:'no-store'}).then(r=>r.json()).then(m=>{
       if(fsEl()){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); return; }
       const req=pl.requestFullscreen||pl.webkitRequestFullscreen;
       if(req){ try{ await req.call(pl); if(screen.orientation&&screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{}); }catch(e){} }
-      else { toast('폰을 가로로 돌리면 화면 가득 크게 보여요'); }   // 아이폰 사파리는 영상 말고는 전체화면이 안 됨
+      else { toast('화면을 가로로 돌리면 가득 크게 보여요'); }   // 아이폰 사파리는 영상 말고는 전체화면이 안 됨
     };
     ['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,()=>{fsb.textContent=fsEl()?'⛶ 작게':'⛶ 크게';document.body.classList.toggle('fsm',!!fsEl());setTimeout(()=>pick(false),300);}));
     function toast(m){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';document.body.appendChild(t);}t.textContent=m;t.style.opacity=1;clearTimeout(t._h);t._h=setTimeout(()=>t.style.opacity=0,2500);}
