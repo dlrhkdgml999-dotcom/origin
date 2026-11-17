@@ -19,12 +19,17 @@ body.land .bar.hide{opacity:0;pointer-events:none}body.land .bar>span:first-chil
 .ctl{display:flex;gap:8px}.ctl button.on{background:#E0479E;border-color:#E0479E}
 video::cue{font-size:18px;background:rgba(20,20,24,.85);color:#fff;line-height:1.4}
 @media (max-width:480px){.bar>span:first-child,.bar b{display:none}.bar{justify-content:center}}
+#toast{position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:rgba(20,20,24,.92);color:#fff;padding:10px 16px;border-radius:14px;font-size:14px;opacity:0;transition:opacity .3s;z-index:9;white-space:nowrap}
+.player:fullscreen,.player:-webkit-full-screen{width:100vw;height:100vh;background:#000}
+.player:fullscreen video{height:100vh!important}
+.player:fullscreen .bar{position:fixed;top:0;right:0;width:auto;background:rgba(17,17,17,.72);border-bottom-left-radius:14px;transition:opacity .4s}
+.player:fullscreen .bar.hide{opacity:0;pointer-events:none}
 .ctl button{white-space:nowrap;background:#2A2D35;color:#F2EEE4;border:1px solid #444;border-radius:16px;padding:6px 12px;font-size:14px;letter-spacing:0}
 </style></head><body>
 <div class="wait" id="wait"><div class="box"><div class="logo"><span>O</span>RIGIN</div>
 <div class="id" id="id"></div><p id="msg">영상을 찾는 중…</p></div></div>
-<div class="player" id="player"><video id="vid" controls playsinline preload="auto" crossorigin="anonymous"><track id="trk" kind="subtitles" srclang="ko" label="자막"></video>
-<div class="bar"><span>ORIGIN</span><span class="ctl"><button id="back">⟲ 10초</button><button id="spd">1배속</button><button id="cc">자막 끔</button></span><b id="cap"></b></div></div>
+<div class="player" id="player"><video id="vid" controls playsinline preload="auto" crossorigin="anonymous" controlslist="nofullscreen nodownload noplaybackrate" disablepictureinpicture><track id="trk" kind="subtitles" srclang="ko" label="자막"></video>
+<div class="bar"><span>ORIGIN</span><span class="ctl"><button id="back">⟲ 10초</button><button id="spd">1배속</button><button id="cc">자막 끔</button><button id="fs">⛶ 크게</button></span><b id="cap"></b></div></div>
 <script>
 const v=new URLSearchParams(location.search).get('v')||'';
 document.getElementById('id').textContent=v||'ID 없음';
@@ -45,7 +50,7 @@ fetch('videos.json',{cache:'no-store'}).then(r=>r.json()).then(m=>{
     const S=[1,1.25,1.5,0.75]; let si=0;
     document.getElementById('spd').onclick=()=>{si=(si+1)%S.length; vd.playbackRate=S[si]; document.getElementById('spd').textContent=S[si]+'배속';};
     vd.addEventListener('loadedmetadata',()=>{vd.playbackRate=S[si];});
-    const bar=document.querySelector('.bar'); let ht=null; function showBar(){bar.classList.remove('hide');clearTimeout(ht);ht=setTimeout(()=>{if(document.body.classList.contains('land')&&!vd.paused)bar.classList.add('hide');},3000);}
+    const bar=document.querySelector('.bar'); let ht=null; function showBar(){bar.classList.remove('hide');clearTimeout(ht);ht=setTimeout(()=>{if((document.body.classList.contains('land')||document.body.classList.contains('fsm'))&&!vd.paused)bar.classList.add('hide');},3000);}
     ['click','touchstart'].forEach(ev=>document.addEventListener(ev,showBar,{passive:true})); vd.addEventListener('play',showBar); vd.addEventListener('pause',()=>bar.classList.remove('hide'));
     const trk=document.getElementById('trk'), ccb=document.getElementById('cc');
     trk.src=u.replace(/\.mp4.*$/,'.vtt');
@@ -55,6 +60,17 @@ fetch('videos.json',{cache:'no-store'}).then(r=>r.json()).then(m=>{
     vd.addEventListener('loadedmetadata',()=>cc(ccOn,false));
     vd.addEventListener('volumechange',()=>{ if((vd.muted||vd.volume===0)&&!ccOn) cc(true,false); });
     cc(ccOn,false);
+    // 전체화면: 영상만 키우면(기본 버튼) 우리 버튼이 사라지므로, 버튼까지 포함한 재생 화면 전체를 키운다
+    const pl=document.getElementById('player'), fsb=document.getElementById('fs');
+    const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement;
+    fsb.onclick=async()=>{
+      if(fsEl()){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); return; }
+      const req=pl.requestFullscreen||pl.webkitRequestFullscreen;
+      if(req){ try{ await req.call(pl); if(screen.orientation&&screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{}); }catch(e){} }
+      else { toast('폰을 가로로 돌리면 화면 가득 크게 보여요'); }   // 아이폰 사파리는 영상 말고는 전체화면이 안 됨
+    };
+    ['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,()=>{fsb.textContent=fsEl()?'⛶ 작게':'⛶ 크게';document.body.classList.toggle('fsm',!!fsEl());setTimeout(()=>pick(false),300);}));
+    function toast(m){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';document.body.appendChild(t);}t.textContent=m;t.style.opacity=1;clearTimeout(t._h);t._h=setTimeout(()=>t.style.opacity=0,2500);}
     document.getElementById('back').onclick=()=>{vd.currentTime=Math.max(0,vd.currentTime-10);};
     window.addEventListener('resize',()=>pick(false)); window.addEventListener('orientationchange',()=>setTimeout(()=>pick(false),300));
   } else { location.replace(u); }   // 유튜브 등 바깥 주소
